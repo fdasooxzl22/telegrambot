@@ -66,6 +66,10 @@ docker-compose down
 
 The bot is configured for automatic deployment through GitHub Actions.
 
+📚 **See detailed deployment guides:**
+- 🇬🇧 [English Deployment Guide](DEPLOYMENT.md)
+- 🇷🇺 [Русское руководство по деплою](DEPLOYMENT_RU.md)
+
 ### How it works:
 
 1. **Push to main branch** → Automatically triggers the deployment workflow
