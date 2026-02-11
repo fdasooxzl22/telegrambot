@@ -1,0 +1,12 @@
+services:
+  telegrambot:
+    build: .
+    container_name: telegrambot
+    environment:
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
