@@ -5,20 +5,26 @@ Analyzes Solana wallets to determine if they're worth copy trading
 
 import asyncio
 import json
+import logging
 from typing import Dict, List, Optional, Tuple
 from datetime import datetime, timedelta
 import httpx
 
-# Monkey patch to fix httpx compatibility issue
-original_httpx_async_client_init = httpx.AsyncClient.__init__
+# Set up logging
+logger = logging.getLogger(__name__)
 
-def patched_httpx_async_client_init(self, *args, proxy=None, **kwargs):
+# Monkey patch to fix httpx compatibility issue
+# Note: This is module-level but isolated to this service
+# The solana library expects 'proxy' but httpx 0.25+ uses 'proxies'
+_original_httpx_async_client_init = httpx.AsyncClient.__init__
+
+def _patched_httpx_async_client_init(self, *args, proxy=None, **kwargs):
     """Patched init that converts 'proxy' to 'proxies' for compatibility"""
     if proxy is not None and 'proxies' not in kwargs:
         kwargs['proxies'] = proxy
-    original_httpx_async_client_init(self, *args, **kwargs)
+    _original_httpx_async_client_init(self, *args, **kwargs)
 
-httpx.AsyncClient.__init__ = patched_httpx_async_client_init
+httpx.AsyncClient.__init__ = _patched_httpx_async_client_init
 
 # Now import solana modules
 from solana.rpc.async_api import AsyncClient
@@ -46,9 +52,7 @@ class SolanaWalletAnalyzer:
                 return response.value / 1e9
             return None
         except Exception as e:
-            print(f"Error getting balance: {e}")
-            import traceback
-            traceback.print_exc()
+            logger.error(f"Error getting balance for {wallet_address}: {e}")
             return None
     
     async def get_transaction_signatures(
@@ -67,7 +71,7 @@ class SolanaWalletAnalyzer:
                 return response.value
             return []
         except Exception as e:
-            print(f"Error getting signatures: {e}")
+            logger.error(f"Error getting signatures for {wallet_address}: {e}")
             return []
     
     async def analyze_trading_activity(
@@ -131,7 +135,7 @@ class SolanaWalletAnalyzer:
             }
             
         except Exception as e:
-            print(f"Error analyzing wallet: {e}")
+            logger.error(f"Error analyzing wallet {wallet_address}: {e}")
             return {
                 "error": str(e),
                 "valid": False
