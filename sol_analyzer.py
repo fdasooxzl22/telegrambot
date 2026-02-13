@@ -47,6 +47,8 @@ class SolanaWalletAnalyzer:
             return None
         except Exception as e:
             print(f"Error getting balance: {e}")
+            import traceback
+            traceback.print_exc()
             return None
     
     async def get_transaction_signatures(
