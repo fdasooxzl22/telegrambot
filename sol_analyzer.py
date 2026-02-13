@@ -8,8 +8,21 @@ import json
 from typing import Dict, List, Optional, Tuple
 from datetime import datetime, timedelta
 import httpx
+
+# Monkey patch to fix httpx compatibility issue
+original_httpx_async_client_init = httpx.AsyncClient.__init__
+
+def patched_httpx_async_client_init(self, *args, proxy=None, **kwargs):
+    """Patched init that converts 'proxy' to 'proxies' for compatibility"""
+    if proxy is not None and 'proxies' not in kwargs:
+        kwargs['proxies'] = proxy
+    original_httpx_async_client_init(self, *args, **kwargs)
+
+httpx.AsyncClient.__init__ = patched_httpx_async_client_init
+
+# Now import solana modules
 from solana.rpc.async_api import AsyncClient
-from solana.publickey import PublicKey
+from solders.pubkey import Pubkey
 
 
 class SolanaWalletAnalyzer:
@@ -26,7 +39,7 @@ class SolanaWalletAnalyzer:
     async def get_wallet_balance(self, wallet_address: str) -> Optional[float]:
         """Get current SOL balance of wallet"""
         try:
-            pubkey = PublicKey(wallet_address)
+            pubkey = Pubkey.from_string(wallet_address)
             response = await self.client.get_balance(pubkey)
             if response.value is not None:
                 # Convert lamports to SOL (1 SOL = 1e9 lamports)
@@ -43,7 +56,7 @@ class SolanaWalletAnalyzer:
     ) -> List[Dict]:
         """Get recent transaction signatures for a wallet"""
         try:
-            pubkey = PublicKey(wallet_address)
+            pubkey = Pubkey.from_string(wallet_address)
             response = await self.client.get_signatures_for_address(
                 pubkey, 
                 limit=limit

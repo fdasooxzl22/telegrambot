@@ -29,8 +29,16 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Initialize analyzer
-analyzer = SolanaWalletAnalyzer()
+# Initialize analyzer (will be created when needed)
+analyzer = None
+
+
+async def get_analyzer() -> SolanaWalletAnalyzer:
+    """Get or create the analyzer instance"""
+    global analyzer
+    if analyzer is None:
+        analyzer = SolanaWalletAnalyzer()
+    return analyzer
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -140,8 +148,11 @@ async def analyze_wallet(update: Update, wallet_address: str) -> None:
     )
     
     try:
+        # Get analyzer instance
+        analyzer_instance = await get_analyzer()
+        
         # Generate analysis report
-        report = await analyzer.generate_analysis_report(wallet_address)
+        report = await analyzer_instance.generate_analysis_report(wallet_address)
         
         # Send the report
         await processing_msg.edit_text(
@@ -171,7 +182,9 @@ async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
 
 async def shutdown(application: Application) -> None:
     """Cleanup on shutdown."""
-    await analyzer.close()
+    global analyzer
+    if analyzer is not None:
+        await analyzer.close()
 
 
 def main() -> None:
