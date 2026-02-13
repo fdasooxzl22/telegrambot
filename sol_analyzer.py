@@ -14,8 +14,9 @@ import httpx
 logger = logging.getLogger(__name__)
 
 # Monkey patch to fix httpx compatibility issue
-# Note: This is module-level but isolated to this service
-# The solana library expects 'proxy' but httpx 0.25+ uses 'proxies'
+# TODO: Remove this workaround when solana library supports httpx>=0.25.0
+# Currently needed for: solana 0.30.x-0.36.x with httpx>=0.25.0
+# The solana library passes 'proxy' but httpx 0.25+ expects 'proxies'
 _original_httpx_async_client_init = httpx.AsyncClient.__init__
 
 def _patched_httpx_async_client_init(self, *args, proxy=None, **kwargs):

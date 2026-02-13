@@ -127,17 +127,18 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     """Handle text messages that might be wallet addresses."""
     text = update.message.text.strip()
     
-    # Check if the message looks like a Solana wallet address
-    # Solana addresses are base58-encoded, 32-44 chars, no 0OIl characters
+    # Solana addresses are base58-encoded (32-44 chars)
+    # Base58 alphabet: 123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz
+    BASE58_ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
+    
     if (32 <= len(text) <= 44 and 
-        text.replace(' ', '').isalnum() and
-        not any(c in text for c in '0OIl')):
+        all(c in BASE58_ALPHABET for c in text)):
         await analyze_wallet(update, text)
     else:
         await update.message.reply_text(
             "🤔 Не распознан как адрес кошелька.\n\n"
             "Используйте `/analyze <адрес>` или отправьте корректный адрес Solana кошелька.\n\n"
-            "⚠️ Адрес должен быть 32-44 символа в формате base58 (без символов 0, O, I, l).",
+            "⚠️ Адрес должен быть 32-44 символа в формате base58.",
             parse_mode=ParseMode.MARKDOWN
         )
 
